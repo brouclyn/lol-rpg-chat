@@ -10,7 +10,6 @@ const sendBtn        = document.getElementById('sendBtn');
 
 let currentThread = null;
 
-// Ajoute un message dans la fenêtre de chat
 function addMessage(content, sender) {
   const msgDiv = document.createElement('div');
   msgDiv.classList.add('message', sender);
@@ -19,7 +18,6 @@ function addMessage(content, sender) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// Démarrer une nouvelle partie
 startBtn.addEventListener('click', async () => {
   try {
     const res = await fetch('/api/newgame', { method: 'POST' });
@@ -34,7 +32,6 @@ startBtn.addEventListener('click', async () => {
     chatScreen.style.display   = 'block';
     chatWindow.innerHTML       = '';
 
-    // Affiche l'intro du MJ
     if (data.initial) {
       addMessage(data.initial, 'mj');
     }
@@ -44,14 +41,12 @@ startBtn.addEventListener('click', async () => {
   }
 });
 
-// Revenir à l'écran d'accueil
 backBtn.addEventListener('click', () => {
   chatScreen.style.display    = 'none';
   welcomeScreen.style.display = 'block';
   currentThread               = null;
 });
 
-// Envoyer l'action du joueur
 sendBtn.addEventListener('click', async () => {
   const message = inputMessage.value.trim();
   if (!message || !currentThread) return;
