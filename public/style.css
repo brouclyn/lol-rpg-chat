@@ -150,3 +150,24 @@ body {
 .btn-gold:hover {
   background: #c89b3c;
 }
+
+/* petit spinner pour les messages */
+.small-spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #333;
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 4px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* alignement du loader côté MJ */
+.message.loading {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* à gauche comme le MJ */
+}
