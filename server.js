@@ -13,7 +13,7 @@ const MODEL        = process.env.OPENAI_MODEL;
 
 // 3. Middlewares
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public'));  // sert index.html, CSS, JS, images…
 
 // 4. Initialisation du client OpenAI
 const openai = new OpenAI({
@@ -28,11 +28,13 @@ app.get('/', (req, res) => {
 // 6. Démarrer une nouvelle partie (nouveau thread + premier run)
 app.post('/api/newgame', async (req, res) => {
   try {
-    // 6.1) Création du thread
-    const thread = await openai.beta.threads.create();
+    // 6.1) Création du thread en l'assignant à ton assistant
+    const thread = await openai.beta.threads.create({
+      assistant_id: ASSISTANT_ID
+    });
     const threadId = thread.id;
 
-    // 6.2) Lancement du premier run (intro du MJ)
+    // 6.2) Premier run pour générer l'introduction du MJ
     const run = await openai.beta.threads.runs.create(threadId, {
       assistant_id: ASSISTANT_ID,
       model: MODEL
@@ -45,7 +47,7 @@ app.post('/api/newgame', async (req, res) => {
       status = info.status;
     }
 
-    // 6.4) Récupérer la réponse initiale
+    // 6.4) Récupérer la réponse initiale du MJ
     const messages = await openai.beta.threads.messages.list(threadId);
     const assistantMsg = messages.data.find(m => m.role === 'assistant');
     const initial = assistantMsg?.content?.[0]?.text?.value || '';
@@ -73,7 +75,7 @@ app.post('/api/message', async (req, res) => {
       content: message
     });
 
-    // 7.2) Lancer un nouveau run pour générer la réponse
+    // 7.2) Lancer un nouveau run pour générer la réponse du MJ
     const run = await openai.beta.threads.runs.create(threadId, {
       assistant_id: ASSISTANT_ID,
       model: MODEL
