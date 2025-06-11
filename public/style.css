@@ -1,3 +1,62 @@
+/* Ajoutez en haut de votre CSS existant */
+:root {
+  --color-bg: #0f111b;
+  --color-panel: #1a1c2b;
+  --color-accent: #d4ae34;
+  --font-main: 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Overlay de chargement full-screen */
+#loading-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Spinner simple */
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid #333;
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Desktop-first : centrer le chat et donner un max-width */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-main);
+  background: var(--color-bg) url('images/bg-loot.jpg') center/cover no-repeat;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#chat-screen, #welcome-screen {
+  width: 80%;
+  max-width: 800px;
+  background: var(--color-panel);
+  border: 2px solid var(--color-accent);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0,0,0,0.8);
+}
+
+/* Messages : préserver les retours chariot */
+.message {
+  white-space: pre-wrap;
+}
+
 .btn-gold {
   background: #D4AE34; /* doré */
   color: #000;
