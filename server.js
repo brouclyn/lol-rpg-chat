@@ -26,6 +26,28 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+async function pollRun(threadId, runId) {
+  const maxAttempts = 40;
+  let attempts = 0;
+  let status = null;
+  let resp = null;
+
+  while (attempts < maxAttempts) {
+    resp = await axios.get(
+      `${BASE_URL}/threads/${threadId}/runs/${runId}`,
+      { headers: openaiHeaders }
+    );
+    status = resp.data.status;
+    // tant que c'est queued ou running, on continue
+    if (status === 'completed') break;
+    if (status === 'failed' || status === 'cancelled') break;
+    await new Promise(r => setTimeout(r, 1000));
+    attempts++;
+  }
+
+  return { status, data: resp?.data };
+}
+
 app.post('/api/newgame', async (req, res) => {
   try {
     // 1) créer le thread
@@ -37,35 +59,23 @@ app.post('/api/newgame', async (req, res) => {
     const thread_id = threadResp.data.id;
 
     // 2) lancer un run
-    const runPayload = { assistant_id: ASSISTANT_ID };
-    if (MODEL) runPayload.model = MODEL;
-    let runResp = await axios.post(
+    const payload = { assistant_id: ASSISTANT_ID };
+    if (MODEL) payload.model = MODEL;
+    const runResp = await axios.post(
       `${BASE_URL}/threads/${thread_id}/runs`,
-      runPayload,
+      payload,
       { headers: openaiHeaders }
     );
-    let run_id    = runResp.data.id;
-    let runStatus = runResp.data.status;
+    const run_id = runResp.data.id;
 
-    // 3) poller jusqu’à completion ou timeout
-    const maxAttempts = 40;
-    let attempts = 0;
-    let statusCheck;
-    while (runStatus === 'running' && attempts < maxAttempts) {
-      await new Promise(r => setTimeout(r, 1000));
-      attempts++;
-      statusCheck = await axios.get(
-        `${BASE_URL}/threads/${thread_id}/runs/${run_id}`,
-        { headers: openaiHeaders }
-      );
-      runStatus = statusCheck.data.status;
-    }
+    // 3) poller jusqu'à completed / failed / cancelled / timeout
+    const { status, data: runData } = await pollRun(thread_id, run_id);
 
-    if (runStatus !== 'completed') {
-      console.error('Run échoué ou timeout:', runStatus, statusCheck?.data);
+    if (status !== 'completed') {
+      console.error('Run échoué ou timeout:', status, runData);
       return res
         .status(500)
-        .send(`Le run a échoué (${runStatus}). Vérifiez les logs serveur.`);
+        .send(`Le run a échoué (${status}). Vérifiez les logs serveur.`);
     }
 
     // 4) récupérer le premier message assistant
@@ -76,12 +86,14 @@ app.post('/api/newgame', async (req, res) => {
     const firstAssistant = messagesResp.data.data.find(m => m.role === 'assistant');
     const initial = firstAssistant?.content?.[0]?.text?.value || '';
 
-    // 5) renvoyer en camelCase pour le front
+    // 5) renvoyer en camelCase
     res.json({ threadId: thread_id, initial });
 
   } catch (err) {
     console.error('Erreur /api/newgame :', err.response?.data || err.message);
-    res.status(500).send('Impossible de démarrer la partie : ' + (err.response?.data?.error?.message || err.message));
+    res
+      .status(500)
+      .send('Impossible de démarrer la partie : ' + (err.response?.data?.error?.message || err.message));
   }
 });
 
@@ -100,38 +112,26 @@ app.post('/api/message', async (req, res) => {
     );
 
     // 2) lancer un run
-    const runPayload = { assistant_id: ASSISTANT_ID };
-    if (MODEL) runPayload.model = MODEL;
-    let runResp = await axios.post(
+    const payload = { assistant_id: ASSISTANT_ID };
+    if (MODEL) payload.model = MODEL;
+    const runResp = await axios.post(
       `${BASE_URL}/threads/${threadId}/runs`,
-      runPayload,
+      payload,
       { headers: openaiHeaders }
     );
-    let run_id    = runResp.data.id;
-    let runStatus = runResp.data.status;
+    const run_id = runResp.data.id;
 
     // 3) poller
-    const maxAttempts = 40;
-    let attempts = 0;
-    let statusCheck;
-    while (runStatus === 'running' && attempts < maxAttempts) {
-      await new Promise(r => setTimeout(r, 1000));
-      attempts++;
-      statusCheck = await axios.get(
-        `${BASE_URL}/threads/${threadId}/runs/${run_id}`,
-        { headers: openaiHeaders }
-      );
-      runStatus = statusCheck.data.status;
-    }
+    const { status, data: runData } = await pollRun(threadId, run_id);
 
-    if (runStatus !== 'completed') {
-      console.error('Run échoué ou timeout:', runStatus, statusCheck?.data);
+    if (status !== 'completed') {
+      console.error('Run échoué ou timeout:', status, runData);
       return res
         .status(500)
-        .send(`Le run a échoué (${runStatus}). Vérifiez les logs serveur.`);
+        .send(`Le run a échoué (${status}). Vérifiez les logs serveur.`);
     }
 
-    // 4) récupérer le dernier message assistant
+    // 4) récupérer la dernière réponse assistant
     const messagesResp = await axios.get(
       `${BASE_URL}/threads/${threadId}/messages`,
       { headers: openaiHeaders }
@@ -144,7 +144,9 @@ app.post('/api/message', async (req, res) => {
 
   } catch (err) {
     console.error('Erreur /api/message :', err.response?.data || err.message);
-    res.status(500).send('Erreur lors de l’appel à l’Assistant : ' + (err.response?.data?.error?.message || err.message));
+    res
+      .status(500)
+      .send('Erreur lors de l’appel à l’Assistant : ' + (err.response?.data?.error?.message || err.message));
   }
 });
 
