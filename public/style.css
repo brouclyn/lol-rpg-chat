@@ -1,0 +1,19 @@
+.btn-gold {
+  background: #D4AE34; /* doré */
+  color: #000;
+  padding: 10px 20px;
+  border: 2px solid #000;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.btn-gold:hover { background: #c89b3c; }
+
+.message { max-width: 60%; margin: 5px 0; padding: 10px; border-radius: 5px; }
+.mj { background: #2b2b2b; color: #fff; margin-left: 0; margin-right: auto; }   /* aligné à gauche */
+.player { background: #3b3b3b; color: #e0e0e0; margin-left: auto; margin-right: 0; text-align: right; }  /* aligné à droite */
+
+#inputMessage { width: 80%; padding: 10px; background: #222; color: #fff; border: 1px solid #555; }
+#sendBtn { width: 15%; }  /* on pourra appliquer .btn-gold en plus pour le style or */
+
+.input-bar { position: fixed; bottom: 0; width: 100%; background: #111; padding: 10px; }

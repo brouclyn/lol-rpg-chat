@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LoL RPG Chat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Écran d'accueil / de démarrage -->
+  <div id="welcome-screen">
+    <h1>League of Legends RPG</h1>
+    <p>Incarnez un champion et vivez une aventure interactive !</p>
+    <button id="startBtn" class="btn-gold">Commencer l’aventure</button>
+  </div>
+  <!-- Écran de chat (caché au début) -->
+  <div id="chat-screen" style="display:none;">
+    <!-- Bouton retour pour revenir à l'accueil -->
+    <button id="backBtn" class="btn-gold"><img src="images/arrow.png" alt="Retour" /></button>
+    <div id="chat-window"></div>  <!-- zone où les messages apparaissent -->
+    <div class="input-bar">
+      <input type="text" id="inputMessage" placeholder="Votre action..." />
+      <button id="sendBtn" class="btn-gold">Envoyer</button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

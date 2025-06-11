@@ -1,0 +1,10 @@
+# Ne pas versionner la clé secrète
+.env
+
+# Dossier des dépendances Node
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
