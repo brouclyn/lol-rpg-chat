@@ -23,7 +23,8 @@ const openaiHeaders = {
 };
 
 /**
- * Lance un run sur un thread existant, attend qu'il se termine, puis renvoie le statut et les données brutes du run.
+ * Lance un run sur un thread existant, attend qu'il se termine (completed, failed ou cancelled),
+ * puis renvoie le statut et les données brutes du run.
  */
 async function runAssistant(threadId) {
   const payload = { assistant_id: ASSISTANT_ID };
@@ -37,7 +38,7 @@ async function runAssistant(threadId) {
   );
   const runId = runStart.id;
 
-  // 2) Polling
+  // 2) Polling jusqu'à completed, failed ou cancelled
   const maxAttempts = 40;
   let attempt = 0;
   let status, runData;
@@ -51,7 +52,12 @@ async function runAssistant(threadId) {
     status  = resp.data.status;
     runData = resp.data;
     attempt++;
-  } while ((status === 'running' || status === 'queued') && attempt < maxAttempts);
+  } while (
+    status !== 'completed' &&
+    status !== 'failed' &&
+    status !== 'cancelled' &&
+    attempt < maxAttempts
+  );
 
   return { status, runData };
 }
