@@ -1,72 +1,82 @@
-const startBtn = document.getElementById('startBtn');
-const backBtn = document.getElementById('backBtn');
-const chatScreen = document.getElementById('chat-screen');
-const welcomeScreen = document.getElementById('welcome-screen');
-const chatWindow = document.getElementById('chat-window');
-const inputMessage = document.getElementById('inputMessage');
-const sendBtn = document.getElementById('sendBtn');
+// public/script.js
 
-let currentThread = null;  // stockera l'ID du thread de la partie en cours
+const startBtn       = document.getElementById('startBtn');
+const backBtn        = document.getElementById('backBtn');
+const chatScreen     = document.getElementById('chat-screen');
+const welcomeScreen  = document.getElementById('welcome-screen');
+const chatWindow     = document.getElementById('chat-window');
+const inputMessage   = document.getElementById('inputMessage');
+const sendBtn        = document.getElementById('sendBtn');
 
-// Fonction pour afficher un message dans la fenêtre de chat
+let currentThread = null;
+
+// Ajoute un message dans la fenêtre de chat
 function addMessage(content, sender) {
   const msgDiv = document.createElement('div');
-  msgDiv.classList.add('message');
-  msgDiv.classList.add(sender); // 'mj' ou 'player'
+  msgDiv.classList.add('message', sender);
   msgDiv.innerText = content;
   chatWindow.appendChild(msgDiv);
-  chatWindow.scrollTop = chatWindow.scrollHeight; // fait défiler vers le bas
+  chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// Clic sur "Commencer l’aventure"
+// Démarrer une nouvelle partie
 startBtn.addEventListener('click', async () => {
-  // Appeler le backend pour créer un nouveau thread
   try {
     const res = await fetch('/api/newgame', { method: 'POST' });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText);
+    }
     const data = await res.json();
     currentThread = data.threadId;
-    // Basculer l'affichage vers l'écran de chat
+
     welcomeScreen.style.display = 'none';
-    chatScreen.style.display = 'block';
-    chatWindow.innerHTML = ''; // on vide d'éventuels anciens messages
-    // (Optionnel) On peut demander au MJ de présenter le scénario initial :
-    // addMessage("Le MJ attend votre première action...", 'mj');
+    chatScreen.style.display   = 'block';
+    chatWindow.innerHTML       = '';
+
+    // Affiche l'intro du MJ
+    if (data.initial) {
+      addMessage(data.initial, 'mj');
+    }
   } catch (err) {
     console.error("Erreur lors de la création de partie :", err);
-    alert("Impossible de démarrer une nouvelle partie.");
+    alert("Impossible de démarrer une nouvelle partie :\n" + err.message);
   }
 });
 
-// Clic sur "Retour" pour revenir à l'accueil (fin de partie)
+// Revenir à l'écran d'accueil
 backBtn.addEventListener('click', () => {
-  chatScreen.style.display = 'none';
+  chatScreen.style.display    = 'none';
   welcomeScreen.style.display = 'block';
-  currentThread = null;
+  currentThread               = null;
 });
 
-// Clic sur "Envoyer" pour envoyer l'action du joueur
+// Envoyer l'action du joueur
 sendBtn.addEventListener('click', async () => {
   const message = inputMessage.value.trim();
   if (!message || !currentThread) return;
-  // Afficher le message du joueur dans l'UI
+
   addMessage(message, 'player');
-  inputMessage.value = '';  // vider le champ
+  inputMessage.value = '';
+
   try {
-    // Envoyer le message au backend
     const res = await fetch('/api/message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ threadId: currentThread, message: message })
+      body: JSON.stringify({ threadId: currentThread, message })
     });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText);
+    }
     const data = await res.json();
     if (data.reply) {
-      // Afficher la réponse du MJ dans l'UI
       addMessage(data.reply, 'mj');
     } else {
       console.error("Réponse invalide du serveur.");
     }
   } catch (err) {
     console.error("Erreur lors de l'envoi du message :", err);
-    alert("Une erreur est survenue en envoyant l'action.");
+    alert("Une erreur est survenue en envoyant l'action :\n" + err.message);
   }
 });
