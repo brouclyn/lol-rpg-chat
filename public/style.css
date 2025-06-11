@@ -42,7 +42,37 @@ body {
 
 /* ——————————————————————————————— */
 /* CONTENEUR D’ACCUEIL + CHAT (desktop-first) */
-#welcome-screen,
+/* Écran d’accueil full height centré */
+#welcome-screen {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 85vh;             /* même hauteur que #chat-screen */
+  color: #fff;              /* texte blanc */
+  text-align: center;
+}
+
+/* Titre et paragraphe */
+#welcome-screen h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-accent);
+}
+#welcome-screen p {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  color: #e0e0e0;
+}
+
+/* Bouton « Commencer » centré et en blanc de texte */
+#welcome-screen .btn-gold {
+  padding: 12px 24px;
+  font-size: 1rem;
+}
+
+
+
 #chat-screen {
   width: 80%;
   max-width: 800px;
