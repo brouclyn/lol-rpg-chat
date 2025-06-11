@@ -2,57 +2,102 @@
 require('dotenv').config();
 const express = require('express');
 const { OpenAI } = require('openai');
-const { v4: uuidv4 } = require('uuid');
-const path = require('path');              // <-- ajout
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 2. Middlewares
-app.use(express.json());
-app.use(express.static('public'));         // sert index.html, style.css, script.js, images…
+// 2. Variables d'environnement de ton assistant
+const ASSISTANT_ID = process.env.ASSISTANT_ID;
+const MODEL        = process.env.OPENAI_MODEL;
 
-// 3. Initialisation de l'API OpenAI
+// 3. Middlewares
+app.use(express.json());
+app.use(express.static('public'));
+
+// 4. Initialisation du client OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// 4. Stockage en mémoire des threads
-let threads = {};
-
-// 5. Route racine : envoie index.html
+// 5. Route racine (envoie index.html)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 6. Nouvelle partie
-app.post('/api/newgame', (req, res) => {
-  const threadId = uuidv4();
-  threads[threadId] = [{
-    role: 'system',
-    content: `Tu es un Maître du Jeu…`  // ton prompt système
-  }];
-  res.json({ threadId });
+// 6. Démarrer une nouvelle partie (nouveau thread + premier run)
+app.post('/api/newgame', async (req, res) => {
+  try {
+    // 6.1) Création du thread
+    const thread = await openai.beta.threads.create();
+    const threadId = thread.id;
+
+    // 6.2) Lancement du premier run (intro du MJ)
+    const run = await openai.beta.threads.runs.create(threadId, {
+      assistant_id: ASSISTANT_ID,
+      model: MODEL
+    });
+
+    // 6.3) Polling jusqu'à completion
+    let status = run.status;
+    while (status !== 'completed') {
+      const info = await openai.beta.threads.runs.retrieve(threadId, run.id);
+      status = info.status;
+    }
+
+    // 6.4) Récupérer la réponse initiale
+    const messages = await openai.beta.threads.messages.list(threadId);
+    const assistantMsg = messages.data.find(m => m.role === 'assistant');
+    const initial = assistantMsg?.content?.[0]?.text?.value || '';
+
+    // 6.5) Renvoyer l'ID et le texte d'introduction
+    res.json({ threadId, initial });
+
+  } catch (err) {
+    console.error('Erreur newgame :', err);
+    res.status(500).send("Impossible de démarrer la partie.");
+  }
 });
 
-// 7. Envoyer un message / action
+// 7. Envoyer une action du joueur (run suivant)
 app.post('/api/message', async (req, res) => {
   const { threadId, message } = req.body;
-  if (!threadId || !threads[threadId]) {
-    return res.status(400).send("Thread inconnu. Commencez une nouvelle partie.");
+  if (!threadId) {
+    return res.status(400).send("Thread manquant.");
   }
-  threads[threadId].push({ role: 'user', content: message });
+
   try {
-    const chatCompletion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: threads[threadId]
+    // 7.1) Ajouter le message du joueur au thread
+    await openai.beta.threads.messages.create(threadId, {
+      role: 'user',
+      content: message
     });
-    const reply = chatCompletion.choices[0].message.content;
-    threads[threadId].push({ role: 'assistant', content: reply });
+
+    // 7.2) Lancer un nouveau run pour générer la réponse
+    const run = await openai.beta.threads.runs.create(threadId, {
+      assistant_id: ASSISTANT_ID,
+      model: MODEL
+    });
+
+    // 7.3) Polling jusqu'à completion
+    let status = run.status;
+    while (status !== 'completed') {
+      const info = await openai.beta.threads.runs.retrieve(threadId, run.id);
+      status = info.status;
+    }
+
+    // 7.4) Récupérer la dernière réponse de l’assistant
+    const messages = await openai.beta.threads.messages.list(threadId);
+    const assistantMsgs = messages.data.filter(m => m.role === 'assistant');
+    const lastMsg = assistantMsgs[assistantMsgs.length - 1];
+    const reply = lastMsg?.content?.[0]?.text?.value || '';
+
+    // 7.5) Renvoyer la réponse
     res.json({ reply });
-  } catch (error) {
-    console.error('Erreur OpenAI :', error);
-    res.status(500).send("Erreur du serveur ou de l'API OpenAI");
+
+  } catch (err) {
+    console.error('Erreur message :', err);
+    res.status(500).send("Erreur lors de l'appel à l'assistant.");
   }
 });
 
