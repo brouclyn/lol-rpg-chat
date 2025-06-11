@@ -46,17 +46,18 @@ async function runAssistant(threadId) {
   do {
     await new Promise(r => setTimeout(r, 1000));
     const resp = await axios.get(
-      `${BASE_URL}/threads/${threadId}/runs/${runId}`,
+     `${BASE_URL}/threads/${threadId}/runs/${runId}`,
       { headers: openaiHeaders }
     );
     status  = resp.data.status;
     runData = resp.data;
     attempt++;
-  } while (
-    status !== 'completed' &&
-    status !== 'failed' &&
-    status !== 'cancelled' &&
-    attempt < maxAttempts
+ } while (
+    // on répète si le run n'est **pas** terminé
+    status === 'queued'    ||
+    status === 'running'   ||
+    status === 'in_progress'
+    && attempt < maxAttempts
   );
 
   return { status, runData };
