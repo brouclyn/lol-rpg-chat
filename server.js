@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 
 // 2. Variables d'environnement de ton assistant
 const ASSISTANT_ID = process.env.ASSISTANT_ID;
-const MODEL        = process.env.OPENAI_MODEL;
+const MODEL        = process.env.OPENAI_MODEL;  // ton assistant utilise déjà le modèle configuré
 
 // 3. Middlewares
 app.use(express.json());
@@ -28,26 +28,24 @@ app.get('/', (req, res) => {
 // 6. Démarrer une nouvelle partie (nouveau thread + premier run)
 app.post('/api/newgame', async (req, res) => {
   try {
-    // 6.1) Création du thread en l'assignant à ton assistant
-    const thread = await openai.beta.threads.create({
-      assistant_id: ASSISTANT_ID
-    });
+    // 6.1) Création du thread (pas d’argument ici)
+    const thread = await openai.beta.threads.create();
     const threadId = thread.id;
 
-    // 6.2) Premier run pour générer l'introduction du MJ
+    // 6.2) Premier run pour générer l'intro du MJ
     const run = await openai.beta.threads.runs.create(threadId, {
-      assistant_id: ASSISTANT_ID,
-      model: MODEL
+      assistant_id: ASSISTANT_ID
+      // on peut omettre model, l’assistant utilisera le modèle configuré par défaut
     });
 
-    // 6.3) Polling jusqu'à completion
+    // 6.3) Attendre la fin du run
     let status = run.status;
     while (status !== 'completed') {
       const info = await openai.beta.threads.runs.retrieve(threadId, run.id);
       status = info.status;
     }
 
-    // 6.4) Récupérer la réponse initiale du MJ
+    // 6.4) Récupérer la réponse initiale
     const messages = await openai.beta.threads.messages.list(threadId);
     const assistantMsg = messages.data.find(m => m.role === 'assistant');
     const initial = assistantMsg?.content?.[0]?.text?.value || '';
@@ -69,26 +67,25 @@ app.post('/api/message', async (req, res) => {
   }
 
   try {
-    // 7.1) Ajouter le message du joueur au thread
+    // 7.1) Ajouter le message du joueur
     await openai.beta.threads.messages.create(threadId, {
       role: 'user',
       content: message
     });
 
-    // 7.2) Lancer un nouveau run pour générer la réponse du MJ
+    // 7.2) Lancer un nouveau run
     const run = await openai.beta.threads.runs.create(threadId, {
-      assistant_id: ASSISTANT_ID,
-      model: MODEL
+      assistant_id: ASSISTANT_ID
     });
 
-    // 7.3) Polling jusqu'à completion
+    // 7.3) Attendre la fin du run
     let status = run.status;
     while (status !== 'completed') {
       const info = await openai.beta.threads.runs.retrieve(threadId, run.id);
       status = info.status;
     }
 
-    // 7.4) Récupérer la dernière réponse de l’assistant
+    // 7.4) Récupérer la dernière réponse
     const messages = await openai.beta.threads.messages.list(threadId);
     const assistantMsgs = messages.data.filter(m => m.role === 'assistant');
     const lastMsg = assistantMsgs[assistantMsgs.length - 1];
