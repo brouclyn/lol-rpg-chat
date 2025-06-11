@@ -1,24 +1,40 @@
 // public/script.js
 
-const startBtn       = document.getElementById('startBtn');
-const backBtn        = document.getElementById('backBtn');
-const chatScreen     = document.getElementById('chat-screen');
-const welcomeScreen  = document.getElementById('welcome-screen');
-const chatWindow     = document.getElementById('chat-window');
-const inputMessage   = document.getElementById('inputMessage');
-const sendBtn        = document.getElementById('sendBtn');
+const startBtn        = document.getElementById('startBtn');
+const backBtn         = document.getElementById('backBtn');
+const chatScreen      = document.getElementById('chat-screen');
+const welcomeScreen   = document.getElementById('welcome-screen');
+const chatWindow      = document.getElementById('chat-window');
+const inputMessage    = document.getElementById('inputMessage');
+const sendBtn         = document.getElementById('sendBtn');
+const loadingOverlay  = document.getElementById('loading-overlay');
 
 let currentThread = null;
 
+// Parse **gras** et sauts de ligne en HTML
+function renderMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+// Ajoute un message dans la fenêtre de chat
 function addMessage(content, sender) {
   const msgDiv = document.createElement('div');
   msgDiv.classList.add('message', sender);
-  msgDiv.innerText = content;
+  if (sender === 'mj') {
+    // injecte du HTML pour le formatage markdown
+    msgDiv.innerHTML = renderMarkdown(content);
+  } else {
+    msgDiv.innerText = content;
+  }
   chatWindow.appendChild(msgDiv);
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
+// Démarrage d'une nouvelle partie
 startBtn.addEventListener('click', async () => {
+  loadingOverlay.style.display = 'flex';
   try {
     const res = await fetch('/api/newgame', { method: 'POST' });
     if (!res.ok) {
@@ -38,15 +54,19 @@ startBtn.addEventListener('click', async () => {
   } catch (err) {
     console.error("Erreur lors de la création de partie :", err);
     alert("Impossible de démarrer une nouvelle partie :\n" + err.message);
+  } finally {
+    loadingOverlay.style.display = 'none';
   }
 });
 
+// Retour à l'écran d'accueil
 backBtn.addEventListener('click', () => {
   chatScreen.style.display    = 'none';
   welcomeScreen.style.display = 'block';
   currentThread               = null;
 });
 
+// Envoi d'un message du joueur
 sendBtn.addEventListener('click', async () => {
   const message = inputMessage.value.trim();
   if (!message || !currentThread) return;
