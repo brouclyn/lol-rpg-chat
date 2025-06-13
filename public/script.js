@@ -4,7 +4,7 @@
 // C'est une bonne pratique pour éviter les erreurs.
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- ÉLÉMENTS DU DOM (VOS SÉLECTEURS SONT PARFAITS) ---
+    // --- ÉLÉMENTS DU DOM ---
     const startBtn = document.getElementById('startBtn');
     const backBtn = document.getElementById('backBtn');
     const chatScreen = document.getElementById('chat-screen');
@@ -14,24 +14,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendBtn = document.getElementById('sendBtn');
     const loadingOverlay = document.getElementById('loading-overlay');
 
-    // --- VARIABLE D'ÉTAT (LA CLÉ DE LA MÉMOIRE DE LA CONVERSATION) ---
+    // --- VARIABLE D'ÉTAT ---
     let currentThread = null;
 
-    // --- FONCTIONS UTILITAIRES (VOS FONCTIONS SONT EXCELLENTES) ---
 
-    // Parse **gras** et sauts de ligne en HTML
+    // --- FONCTIONS UTILITAIRES ---
+
+    // ==================== MODIFICATION APPLIQUÉE ICI ====================
+    /**
+     * Transforme le texte avec des démarques (Markdown) en HTML.
+     * Gère les titres (#, ##, ###), le gras (**) et les sauts de ligne.
+     */
     function renderMarkdown(text) {
-        return text
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\n/g, '<br>');
+        // On initialise une variable avec le texte brut.
+        let html = text;
+
+        // On applique une série de remplacements pour convertir les démarques en balises HTML.
+        // L'ordre est important : on traite les titres les plus spécifiques (###) en premier.
+        html = html
+            .replace(/^###\s*(.+)/gm, '<h3>$1</h3>')      // Titres H3 pour "### Titre"
+            .replace(/^##\s*(.+)/gm, '<h2>$1</h2>')       // Titres H2 pour "## Titre"
+            .replace(/^#\s*(.+)/gm, '<h1>$1</h1>')        // Titres H1 pour "# Titre"
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Gras pour "**texte**"
+            .replace(/\n/g, '<br>');                      // Sauts de ligne
+
+        // On retourne le HTML final.
+        return html;
     }
+    // ===================================================================
+
 
     // Ajoute un message dans la fenêtre de chat
     function addMessage(content, sender) {
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('message', sender);
-        // Vous gérez parfaitement la différence de rendu entre le joueur et le MJ
+        
         if (sender === 'mj') {
+            // La fonction renderMarkdown est maintenant plus puissante !
             msgDiv.innerHTML = renderMarkdown(content);
         } else {
             msgDiv.innerText = content;
@@ -40,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    // --- LOGIQUE PRINCIPALE ---
+    // --- LOGIQUE PRINCIPALE (INCHANGÉE) ---
 
     // Démarrage d'une nouvelle partie
     async function handleStartGame() {
@@ -50,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!res.ok) throw new Error(await res.text());
 
             const data = await res.json();
-            // C'est ici que la magie opère : on sauvegarde l'ID du thread.
             currentThread = data.threadId;
 
             welcomeScreen.style.display = 'none';
@@ -88,7 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch('/api/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // Et ici, on utilise l'ID sauvegardé pour continuer la bonne conversation.
                 body: JSON.stringify({ threadId: currentThread, message })
             });
             if (!res.ok) throw new Error(await res.text());
@@ -113,20 +130,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleGoBack() {
         chatScreen.style.display = 'none';
         welcomeScreen.style.display = 'block';
-        // On réinitialise l'ID pour la prochaine partie. C'est propre !
         currentThread = null;
     }
 
 
-    // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
+    // --- ÉCOUTEURS D'ÉVÉNEMENTS (INCHANGÉS) ---
     startBtn.addEventListener('click', handleStartGame);
     backBtn.addEventListener('click', handleGoBack);
     sendBtn.addEventListener('click', handleSendMessage);
-
-    // Amélioration : Permet d'envoyer avec la touche "Entrée"
     inputMessage.addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
-            event.preventDefault(); // Empêche le comportement par défaut (comme soumettre un formulaire)
+            event.preventDefault();
             handleSendMessage();
         }
     });
