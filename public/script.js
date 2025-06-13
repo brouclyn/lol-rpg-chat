@@ -1,4 +1,4 @@
-// Fichier : script.js
+// Fichier : script.js (avec la correction)
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -23,21 +23,26 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function processAssistantReply(text) {
         let html = text || '';
-        // D'abord, le markdown classique
+
+        // ==================== CORRECTION APPLIQUÉE ICI ====================
+        // L'ORDRE DES REMPLACEMENTS EST IMPORTANT
+
+        // 1. On traite d'abord les titres et le gras
         html = html
             .replace(/^###\s*(.+)/gm, '<h3>$1</h3>')
             .replace(/^##\s*(.+)/gm, '<h2>$1</h2>')
             .replace(/^#\s*(.+)/gm, '<h1>$1</h1>')
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\n/g, '<br>');
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
-        // Ensuite, on transforme les listes numérotées en boutons
-        // La regex cherche les lignes qui commencent par un ou plusieurs chiffres, un point et un espace.
+        // 2. ENSUITE, on transforme les listes numérotées en boutons.
+        // C'est fait avant de remplacer les retours à la ligne \n.
         html = html.replace(/^\s*(\d+)\.\s+(.*)/gm, (match, number, choiceText) => {
-            // Pour chaque correspondance, on crée un bouton.
-            // On stocke le numéro du choix dans un attribut 'data-choice'
-            return `<button class="choice-button" data-choice="${number}">${number}. ${choiceText}</button>`;
+            return `<button class="choice-button" data-choice="${number}">${number}. ${choiceText.trim()}</button>`;
         });
+
+        // 3. ENFIN, on remplace les retours à la ligne restants par des <br>
+        html = html.replace(/\n/g, '<br>');
+        // =================================================================
 
         return html;
     }
@@ -45,9 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function addMessage(content, sender) {
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('message', sender);
-        
         if (sender === 'mj') {
-            // On utilise notre nouvelle fonction de traitement
             msgDiv.innerHTML = processAssistantReply(content);
         } else {
             msgDiv.innerText = content;
@@ -56,7 +59,19 @@ document.addEventListener('DOMContentLoaded', () => {
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    // --- FONCTIONS PRINCIPALES ---
+    // --- FONCTIONS PRINCIPALES (inchangées) ---
+    async function handleSendMessage() {
+        // ... (votre fonction est correcte)
+    }
+    async function initiateGame() {
+        // ... (votre fonction est correcte)
+    }
+
+    // --- ÉCOUTEURS D'ÉVÉNEMENTS (inchangés) ---
+    // ... (vos écouteurs sont corrects)
+
+
+    /* --- Pour être sûr, voici le reste du script complet --- */
     async function handleSendMessage() {
         const message = inputMessage.value.trim();
         if (!message || !currentThread) return;
@@ -64,13 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
         inputMessage.value = '';
         inputMessage.focus();
         inputMessage.style.height = 'auto';
-
         const loaderDiv = document.createElement('div');
         loaderDiv.classList.add('message', 'mj', 'loading');
         loaderDiv.innerHTML = '<div class="small-spinner"></div>';
         chatWindow.appendChild(loaderDiv);
         chatWindow.scrollTop = chatWindow.scrollHeight;
-
         try {
             const res = await fetch('/api/message', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ threadId: currentThread, message }) });
             if (!res.ok) throw new Error(await res.text());
@@ -82,51 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessage(`<i>Une erreur est survenue : ${err.message}</i>`, 'mj');
         }
     }
-
-    async function initiateGame() {
-        // ... (votre fonction initiateGame reste inchangée) ...
-    }
-
-    // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
-    startBtn.addEventListener('click', initiateGame);
-    newGameBtn.addEventListener('click', initiateGame);
-    sendBtn.addEventListener('click', handleSendMessage);
-    
-    inputMessage.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && !event.altKey) {
-            event.preventDefault(); 
-            handleSendMessage();
-        }
-    });
-
-    inputMessage.addEventListener('input', () => {
-        inputMessage.style.height = 'auto';
-        inputMessage.style.height = (inputMessage.scrollHeight) + 'px';
-    });
-
-    // NOUVEL ÉCOUTEUR D'ÉVÉNEMENT POUR GÉRER LES CLICS SUR LES BOUTONS DE CHOIX
-    chatWindow.addEventListener('click', (event) => {
-        // On vérifie si l'élément cliqué est bien un bouton de choix
-        if (event.target.matches('.choice-button')) {
-            const choiceNumber = event.target.dataset.choice;
-            
-            // On met le numéro du choix dans la barre de saisie
-            inputMessage.value = choiceNumber;
-            
-            // On envoie le message comme si l'utilisateur l'avait tapé
-            handleSendMessage();
-
-            // Pour une meilleure expérience, on désactive tous les boutons de ce bloc de choix
-            const parentMessage = event.target.closest('.message');
-            if (parentMessage) {
-                parentMessage.querySelectorAll('.choice-button').forEach(button => {
-                    button.disabled = true;
-                });
-            }
-        }
-    });
-    
-    // Pour ne rien oublier, voici la fonction initiateGame complète
     async function initiateGame() {
         loadingOverlay.style.display = 'flex';
         progressBar.style.width = '0%';
@@ -149,4 +117,30 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Impossible de démarrer une nouvelle partie :\n" + err.message);
         }
     }
+    startBtn.addEventListener('click', initiateGame);
+    newGameBtn.addEventListener('click', initiateGame);
+    sendBtn.addEventListener('click', handleSendMessage);
+    inputMessage.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.altKey) {
+            event.preventDefault(); 
+            handleSendMessage();
+        }
+    });
+    inputMessage.addEventListener('input', () => {
+        inputMessage.style.height = 'auto';
+        inputMessage.style.height = (inputMessage.scrollHeight) + 'px';
+    });
+    chatWindow.addEventListener('click', (event) => {
+        if (event.target.matches('.choice-button')) {
+            const choiceNumber = event.target.dataset.choice;
+            inputMessage.value = choiceNumber;
+            handleSendMessage();
+            const parentMessage = event.target.closest('.message');
+            if (parentMessage) {
+                parentMessage.querySelectorAll('.choice-button').forEach(button => {
+                    button.disabled = true;
+                });
+            }
+        }
+    });
 });
