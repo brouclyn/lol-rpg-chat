@@ -14,144 +14,51 @@ body {
 }
 
 /* --- ÉCRAN 1 : STYLES DU SPLASH SCREEN --- */
-#welcome-screen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    width: 100%;
-    height: 100vh;
-    padding: 20px;
-    color: #fff;
-    background-color: rgba(15, 17, 27, 0.7);
-}
-#welcome-screen img {
-    max-width: 350px;
-    margin-bottom: 20px;
-}
-#welcome-screen h1 {
-    font-size: 3rem;
-    color: var(--color-accent);
-    margin-bottom: 1rem;
-}
-#welcome-screen p {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
-}
-#welcome-screen .btn-gold {
-    padding: 15px 30px;
-    font-size: 1.1rem;
-}
+#welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; height: 100vh; padding: 20px; color: #fff; background-color: rgba(15, 17, 27, 0.7); }
+#welcome-screen img { max-width: 350px; margin-bottom: 20px; }
+#welcome-screen h1 { font-size: 3rem; color: var(--color-accent); margin-bottom: 1rem; }
+#welcome-screen p { font-size: 1.2rem; margin-bottom: 2rem; }
+#welcome-screen .btn-gold { padding: 15px 30px; font-size: 1.1rem; position: relative; overflow: hidden; transition: background 0.3s; }
+#welcome-screen .btn-gold::after { content: ''; position: absolute; top: -50%; left: -60%; width: 20%; height: 200%; opacity: 0; transform: rotate(30deg); background: linear-gradient( to right, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.13) 77%, rgba(255, 255, 255, 0.5) 92%, rgba(255, 255, 255, 0.0) 100% ); transition: all 0.7s cubic-bezier(0.4, 0.0, 0.2, 1); }
+#welcome-screen .btn-gold:hover::after { opacity: 1; left: 130%; }
 
 /* --- ÉCRAN 2 : STYLES DE LA VUE DE JEU --- */
-#game-view {
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-#navbar {
-    position: sticky; top: 0; width: 100%; z-index: 1000;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 25px;
-    background-color: rgba(15, 17, 27, 0.85);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--color-accent);
-}
+#game-view { width: 100%; height: 100vh; display: flex; flex-direction: column; }
+#navbar { position: sticky; top: 0; width: 100%; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 10px 25px; background-color: rgba(15, 17, 27, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--color-accent); }
 #navbar-logo { height: 40px; }
-
-#chat-container {
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 20px;
-}
-#chat-window {
-    flex-grow: 1;
-    padding: 20px;
-    overflow-y: auto;
-}
+#chat-container { width: 100%; max-width: 800px; margin: 0 auto; flex-grow: 1; display: flex; flex-direction: column; padding-bottom: 20px; }
+#chat-window { flex-grow: 1; padding: 20px; overflow-y: auto; }
 
 /* --- OVERLAY DE CHARGEMENT --- */
-#loading-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 2000;
-}
+#loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
 .loading-box { display: flex; flex-direction: column; align-items: center; color: #fff; }
 .loading-box span { margin-top: 20px; font-size: 1.1em; }
-.progress-bar {
-    width: 200px; height: 8px;
-    background-color: #333;
-    border-radius: 4px;
-    margin-top: 15px;
-    overflow: hidden;
-}
-.progress-bar-inner {
-    width: 0%; height: 100%;
-    background-color: var(--color-accent);
-    transition: width 0.5s ease;
-}
+.progress-bar { width: 200px; height: 8px; background-color: #333; border-radius: 4px; margin-top: 15px; overflow: hidden; }
+.progress-bar-inner { width: 0%; height: 100%; background-color: var(--color-accent); transition: width 0.5s ease; }
 
-/* --- STYLES EXISTANTS --- */
-.input-bar { display: flex; padding: 10px; background: #111; border-top: 1px solid #333; }
-.input-bar input { flex: 1; padding: 10px; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px 0 0 4px; font-size: 1rem; }
-.input-bar button { width: 90px; border: none; background: var(--color-accent); color: #000; font-weight: bold; border-radius: 0 4px 4px 0; cursor: pointer; }
+/* --- BARRE DE SAISIE (MODIFIÉE) --- */
+.input-bar { display: flex; padding: 10px; background: #111; border-top: 1px solid #333; align-items: flex-start; }
+.input-bar textarea { /* Remplacement de 'input' par 'textarea' */
+    flex: 1;
+    padding: 10px;
+    background: #222;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px 0 0 4px;
+    font-size: 1rem;
+    font-family: var(--font-main);
+    resize: none; /* Empêche le redimensionnement manuel */
+    line-height: 1.5;
+    height: auto;
+}
+.input-bar button { width: 90px; padding: 10px; border: none; background: var(--color-accent); color: #000; font-weight: bold; border-radius: 0 4px 4px 0; cursor: pointer; align-self: stretch; }
+
+/* --- MESSAGES ET AUTRES --- */
 .message { white-space: pre-wrap; max-width: 90%; margin: 8px 0; padding: 12px; border-radius: 6px; }
 .mj { background: #2b2b2b; }
 .player { background: #3b3b3b; text-align: right; margin-left: auto; }
 .btn-gold { background: #D4AE34; color: #000; padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
 .spinner { width: 60px; height: 60px; border: 6px solid #333; border-top-color: var(--color-accent); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* ================================================= */
-/* === AJOUTS POUR LES NOUVELLES FONCTIONNALITÉS === */
-/* ================================================= */
-
-/* --- 1. EFFET DE REFLET SUR LE BOUTON D'ACCUEIL --- */
-#welcome-screen .btn-gold {
-    position: relative;
-    overflow: hidden;
-    transition: background 0.3s;
-}
-
-#welcome-screen .btn-gold::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -60%;
-    width: 20%;
-    height: 200%;
-    opacity: 0;
-    transform: rotate(30deg);
-    background: linear-gradient( to right, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.13) 77%, rgba(255, 255, 255, 0.5) 92%, rgba(255, 255, 255, 0.0) 100% );
-    transition: all 0.7s cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-
-#welcome-screen .btn-gold:hover::after {
-    opacity: 1;
-    left: 130%;
-}
-
-/* --- 2. LOADER POUR LES MESSAGES DU MJ --- */
-.message.loading {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 8px 12px;
-    background-color: #2b2b2b; /* Même fond que les messages du MJ */
-}
-
-.small-spinner {
-    width: 20px;
-    height: 20px;
-    border: 3px solid #555;
-    border-top-color: var(--color-accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
+.message.loading { display: flex; align-items: center; justify-content: flex-start; padding: 8px 12px; background-color: #2b2b2b; }
+.small-spinner { width: 20px; height: 20px; border: 3px solid #555; border-top-color: var(--color-accent); border-radius: 50%; animation: spin 1s linear infinite; }
