@@ -46,40 +46,50 @@ async function runAssistant(threadId) {
   do {
     await new Promise(r => setTimeout(r, 1000));
     const resp = await axios.get(
-     `${BASE_URL}/threads/${threadId}/runs/${runId}`,
+      `${BASE_URL}/threads/${threadId}/runs/${runId}`,
       { headers: openaiHeaders }
     );
     status  = resp.data.status;
     runData = resp.data;
     attempt++;
- } while (
+  } while (
     // on répète si le run n'est **pas** terminé
-    status === 'queued'    ||
-    status === 'running'   ||
-    status === 'in_progress'
+    (status === 'queued'    ||
+     status === 'running'   ||
+     status === 'in_progress')
     && attempt < maxAttempts
   );
 
   return { status, runData };
 }
 
+
+// ==================== CORRECTION APPLIQUÉE ICI ====================
 /**
- * Récupère le premier (ou le dernier) message rôle assistant sur un thread.
+ * Récupère le message de l'assistant sur un thread.
+ * L'API renvoie les messages par défaut dans l'ordre décroissant (du plus récent au plus ancien).
  * @param {string} threadId 
- * @param {'first'|'last'} which 
+ * @param {'first'|'last'} which 'last' pour le plus récent (la dernière réponse), 'first' pour le plus ancien (l'intro).
  */
 async function getAssistantMessage(threadId, which = 'last') {
   const { data: messages } = await axios.get(
     `${BASE_URL}/threads/${threadId}/messages`,
     { headers: openaiHeaders }
   );
+  
   const assistants = messages.data.filter(m => m.role === 'assistant');
   if (!assistants.length) return '';
+
+  // Le message le plus récent est à l'index 0.
+  // Le message le plus ancien est au dernier index (assistants.length - 1).
   const msg = which === 'first'
-    ? assistants[0]
-    : assistants[assistants.length - 1];
+    ? assistants[assistants.length - 1] // Pour l'intro, on prend le plus ancien.
+    : assistants[0];                     // Pour la réponse, on prend le plus récent.
+  
   return msg.content?.[0]?.text?.value || '';
 }
+// =================================================================
+
 
 // Route racine
 app.get('/', (req, res) => {
@@ -106,7 +116,7 @@ app.post('/api/newgame', async (req, res) => {
       return res.status(500).send(`Le run a échoué (${status}).`);
     }
 
-    // 3) récupérer et renvoyer le premier message
+    // 3) récupérer et renvoyer le premier message (le plus ancien)
     const initial = await getAssistantMessage(threadId, 'first');
     res.json({ threadId, initial });
 
@@ -141,7 +151,7 @@ app.post('/api/message', async (req, res) => {
       return res.status(500).send(`Le run a échoué (${status}).`);
     }
 
-    // 3) récupérer et renvoyer la réponse du MJ
+    // 3) récupérer et renvoyer la réponse du MJ (la plus récente)
     const reply = await getAssistantMessage(threadId, 'last');
     res.json({ reply, threadId });
 
