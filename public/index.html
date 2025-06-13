@@ -4,28 +4,35 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LoL RPG Chat</title>
+
+  <link rel="icon" type="image/png" href="images/favicon.png">
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="loading-overlay" style="display:none;">
     <div class="spinner"></div>
   </div>
-  <!-- Écran d'accueil / de démarrage -->
+
   <div id="welcome-screen">
+    <img src="images/logo.jpg" alt="Logo du JDR" style="max-width: 300px; margin-bottom: 20px;">
+    
     <h1>League of Legends RPG</h1>
     <p>Incarnez un champion et vivez une aventure interactive !</p>
     <button id="startBtn" class="btn-gold">Commencer l’aventure</button>
   </div>
-  <!-- Écran de chat (caché au début) -->
+
   <div id="chat-screen" style="display:none;">
-    <!-- Bouton retour pour revenir à l'accueil -->
-    <button id="backBtn" class="btn-gold"><img src="images/arrow.png" alt="Retour" /></button>
-    <div id="chat-window"></div>  <!-- zone où les messages apparaissent -->
-    <div class="input-bar">
+    <button id="backBtn" class="btn-gold">
+        <img src="images/arrow.png" alt="Retour" style="height: 1em; margin-right: 5px; vertical-align: middle;" />
+    </button>
+    
+    <div id="chat-window"></div>  <div class="input-bar">
       <input type="text" id="inputMessage" placeholder="Votre action..." />
       <button id="sendBtn" class="btn-gold">Envoyer</button>
     </div>
   </div>
+  
   <script src="script.js"></script>
 </body>
 </html>
