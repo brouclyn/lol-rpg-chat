@@ -1,14 +1,9 @@
 // public/script.js
 
-// On attend que le contenu de la page soit entièrement chargé avant d'exécuter le script.
-// C'est une bonne pratique pour éviter les erreurs.
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- ÉLÉMENTS DU DOM ---
-    const startBtn = document.getElementById('startBtn');
-    const backBtn = document.getElementById('backBtn');
-    const chatScreen = document.getElementById('chat-screen');
-    const welcomeScreen = document.getElementById('welcome-screen');
+    // --- SÉLECTEURS DU DOM MIS À JOUR ---
+    const newGameBtn = document.getElementById('newGameBtn');
     const chatWindow = document.getElementById('chat-window');
     const inputMessage = document.getElementById('inputMessage');
     const sendBtn = document.getElementById('sendBtn');
@@ -17,40 +12,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- VARIABLE D'ÉTAT ---
     let currentThread = null;
 
-
-    // --- FONCTIONS UTILITAIRES ---
-
-    // ==================== MODIFICATION APPLIQUÉE ICI ====================
-    /**
-     * Transforme le texte avec des démarques (Markdown) en HTML.
-     * Gère les titres (#, ##, ###), le gras (**) et les sauts de ligne.
-     */
+    // --- FONCTIONS UTILITAIRES (INCHANGÉES) ---
     function renderMarkdown(text) {
-        // On initialise une variable avec le texte brut.
         let html = text;
-
-        // On applique une série de remplacements pour convertir les démarques en balises HTML.
-        // L'ordre est important : on traite les titres les plus spécifiques (###) en premier.
         html = html
-            .replace(/^###\s*(.+)/gm, '<h3>$1</h3>')      // Titres H3 pour "### Titre"
-            .replace(/^##\s*(.+)/gm, '<h2>$1</h2>')       // Titres H2 pour "## Titre"
-            .replace(/^#\s*(.+)/gm, '<h1>$1</h1>')        // Titres H1 pour "# Titre"
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Gras pour "**texte**"
-            .replace(/\n/g, '<br>');                      // Sauts de ligne
-
-        // On retourne le HTML final.
+            .replace(/^###\s*(.+)/gm, '<h3>$1</h3>')
+            .replace(/^##\s*(.+)/gm, '<h2>$1</h2>')
+            .replace(/^#\s*(.+)/gm, '<h1>$1</h1>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
         return html;
     }
-    // ===================================================================
 
-
-    // Ajoute un message dans la fenêtre de chat
     function addMessage(content, sender) {
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('message', sender);
-        
         if (sender === 'mj') {
-            // La fonction renderMarkdown est maintenant plus puissante !
             msgDiv.innerHTML = renderMarkdown(content);
         } else {
             msgDiv.innerText = content;
@@ -59,11 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    // --- LOGIQUE PRINCIPALE (INCHANGÉE) ---
+    // --- LOGIQUE PRINCIPALE ---
 
-    // Démarrage d'une nouvelle partie
+    // La fonction est simplifiée : elle ne change plus d'écran, elle réinitialise juste le chat.
     async function handleStartGame() {
         loadingOverlay.style.display = 'flex';
+        chatWindow.innerHTML = ''; // On vide la fenêtre
+        addMessage("Création d'une nouvelle aventure...", 'mj');
+
         try {
             const res = await fetch('/api/newgame', { method: 'POST' });
             if (!res.ok) throw new Error(await res.text());
@@ -71,9 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             currentThread = data.threadId;
 
-            welcomeScreen.style.display = 'none';
-            chatScreen.style.display = 'block';
-            chatWindow.innerHTML = '';
+            chatWindow.innerHTML = ''; // On vide à nouveau pour enlever le message "Création..."
             inputMessage.focus();
 
             if (data.initial) {
@@ -81,13 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             console.error("Erreur lors de la création de partie :", err);
-            alert("Impossible de démarrer une nouvelle partie :\n" + err.message);
+            chatWindow.innerHTML = `<div class="message mj">Impossible de démarrer une nouvelle partie :<br>${err.message}</div>`;
         } finally {
             loadingOverlay.style.display = 'none';
         }
     }
 
-    // Envoi d'un message du joueur
+    // handleSendMessage reste identique
     async function handleSendMessage() {
         const message = inputMessage.value.trim();
         if (!message || !currentThread) return;
@@ -116,27 +94,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.reply) {
                 addMessage(data.reply, 'mj');
             } else {
-                console.error("Réponse invalide du serveur.");
                 addMessage("<i>Le MJ semble confus et ne répond pas...</i>", 'mj');
             }
         } catch (err) {
             loaderDiv.remove();
-            console.error("Erreur lors de l'envoi du message :", err);
             addMessage(`<i>Une erreur est survenue : ${err.message}</i>`, 'mj');
         }
     }
 
-    // Retour à l'écran d'accueil
-    function handleGoBack() {
-        chatScreen.style.display = 'none';
-        welcomeScreen.style.display = 'block';
-        currentThread = null;
-    }
-
-
-    // --- ÉCOUTEURS D'ÉVÉNEMENTS (INCHANGÉS) ---
-    startBtn.addEventListener('click', handleStartGame);
-    backBtn.addEventListener('click', handleGoBack);
+    // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
+    newGameBtn.addEventListener('click', handleStartGame); // Le nouveau bouton est maintenant connecté
     sendBtn.addEventListener('click', handleSendMessage);
     inputMessage.addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
@@ -145,4 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // On lance une partie dès que la page est chargée
+    handleStartGame();
 });
