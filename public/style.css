@@ -201,3 +201,23 @@ body {
   align-items: center;
   justify-content: flex-start; /* à gauche comme le MJ */
 }
+
+.message h1,
+.message h2,
+.message h3 {
+  margin-top: 10px;
+  margin-bottom: 5px;
+  line-height: 1.2;
+}
+
+.message h1 {
+  font-size: 1.5em; /* 150% de la taille normale */
+}
+
+.message h2 {
+  font-size: 1.3em; /* 130% de la taille normale */
+}
+
+.message h3 {
+  font-size: 1.1em; /* 110% de la taille normale */
+}
