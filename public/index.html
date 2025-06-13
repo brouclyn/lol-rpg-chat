@@ -8,22 +8,36 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <nav id="navbar">
-        <img src="images/logo.png" alt="Logo" id="navbar-logo">
-        <button id="newGameBtn" class="btn-gold">Nouvelle Partie</button>
-    </nav>
-
     <div id="loading-overlay" style="display:none;">
-        <div class="spinner"></div>
+        <div class="loading-box">
+            <div class="spinner"></div>
+            <span>Chargement de l'aventure...</span>
+            <div class="progress-bar">
+                <div class="progress-bar-inner"></div>
+            </div>
+        </div>
     </div>
 
-    <main id="chat-container">
-        <div id="chat-window"></div>
-        <div class="input-bar">
-            <input type="text" id="inputMessage" placeholder="Votre action..." />
-            <button id="sendBtn" class="btn-gold">Envoyer</button>
-        </div>
-    </main>
+    <div id="welcome-screen">
+        <img src="images/logo.png" alt="Logo du JDR">
+        <h1>League of Legends RPG</h1>
+        <p>Incarnez un champion et vivez une aventure interactive !</p>
+        <button id="startBtn" class="btn-gold">Commencer l'aventure</button>
+    </div>
+
+    <div id="game-view" style="display:none;">
+        <nav id="navbar">
+            <img src="images/logo.png" alt="Logo" id="navbar-logo">
+            <button id="newGameBtn" class="btn-gold">Nouvelle Partie</button>
+        </nav>
+        <main id="chat-container">
+            <div id="chat-window"></div>
+            <div class="input-bar">
+                <input type="text" id="inputMessage" placeholder="Votre action..." />
+                <button id="sendBtn" class="btn-gold">Envoyer</button>
+            </div>
+        </main>
+    </div>
 
     <script src="script.js"></script>
 </body>
