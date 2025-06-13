@@ -1,8 +1,8 @@
-// public/script.js
+// Fichier : script.js
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- SÉLECTEURS DU DOM ---
+    // --- SÉLECTEURS DU DOM (inchangés) ---
     const loadingOverlay = document.getElementById('loading-overlay');
     const progressBar = document.querySelector('.progress-bar-inner');
     const welcomeScreen = document.getElementById('welcome-screen');
@@ -15,15 +15,43 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentThread = null;
 
     // --- FONCTIONS UTILITAIRES ---
-    function renderMarkdown(text) {
+
+    /**
+     * Traite la réponse de l'assistant :
+     * 1. Convertit le Markdown (titres, gras) en HTML.
+     * 2. Convertit les listes numérotées en boutons cliquables.
+     */
+    function processAssistantReply(text) {
         let html = text || '';
-        html = html.replace(/^###\s*(.+)/gm, '<h3>$1</h3>').replace(/^##\s*(.+)/gm, '<h2>$1</h2>').replace(/^#\s*(.+)/gm, '<h1>$1</h1>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        // D'abord, le markdown classique
+        html = html
+            .replace(/^###\s*(.+)/gm, '<h3>$1</h3>')
+            .replace(/^##\s*(.+)/gm, '<h2>$1</h2>')
+            .replace(/^#\s*(.+)/gm, '<h1>$1</h1>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+
+        // Ensuite, on transforme les listes numérotées en boutons
+        // La regex cherche les lignes qui commencent par un ou plusieurs chiffres, un point et un espace.
+        html = html.replace(/^\s*(\d+)\.\s+(.*)/gm, (match, number, choiceText) => {
+            // Pour chaque correspondance, on crée un bouton.
+            // On stocke le numéro du choix dans un attribut 'data-choice'
+            return `<button class="choice-button" data-choice="${number}">${number}. ${choiceText}</button>`;
+        });
+
         return html;
     }
+
     function addMessage(content, sender) {
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('message', sender);
-        if (sender === 'mj') { msgDiv.innerHTML = renderMarkdown(content); } else { msgDiv.innerText = content; }
+        
+        if (sender === 'mj') {
+            // On utilise notre nouvelle fonction de traitement
+            msgDiv.innerHTML = processAssistantReply(content);
+        } else {
+            msgDiv.innerText = content;
+        }
         chatWindow.appendChild(msgDiv);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
@@ -35,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessage(message, 'player');
         inputMessage.value = '';
         inputMessage.focus();
-        inputMessage.style.height = 'auto'; // Réinitialise la hauteur après envoi
+        inputMessage.style.height = 'auto';
 
         const loaderDiv = document.createElement('div');
         loaderDiv.classList.add('message', 'mj', 'loading');
@@ -55,6 +83,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function initiateGame() {
+        // ... (votre fonction initiateGame reste inchangée) ...
+    }
+
+    // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
+    startBtn.addEventListener('click', initiateGame);
+    newGameBtn.addEventListener('click', initiateGame);
+    sendBtn.addEventListener('click', handleSendMessage);
+    
+    inputMessage.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.altKey) {
+            event.preventDefault(); 
+            handleSendMessage();
+        }
+    });
+
+    inputMessage.addEventListener('input', () => {
+        inputMessage.style.height = 'auto';
+        inputMessage.style.height = (inputMessage.scrollHeight) + 'px';
+    });
+
+    // NOUVEL ÉCOUTEUR D'ÉVÉNEMENT POUR GÉRER LES CLICS SUR LES BOUTONS DE CHOIX
+    chatWindow.addEventListener('click', (event) => {
+        // On vérifie si l'élément cliqué est bien un bouton de choix
+        if (event.target.matches('.choice-button')) {
+            const choiceNumber = event.target.dataset.choice;
+            
+            // On met le numéro du choix dans la barre de saisie
+            inputMessage.value = choiceNumber;
+            
+            // On envoie le message comme si l'utilisateur l'avait tapé
+            handleSendMessage();
+
+            // Pour une meilleure expérience, on désactive tous les boutons de ce bloc de choix
+            const parentMessage = event.target.closest('.message');
+            if (parentMessage) {
+                parentMessage.querySelectorAll('.choice-button').forEach(button => {
+                    button.disabled = true;
+                });
+            }
+        }
+    });
+    
+    // Pour ne rien oublier, voici la fonction initiateGame complète
     async function initiateGame() {
         loadingOverlay.style.display = 'flex';
         progressBar.style.width = '0%';
@@ -77,22 +149,4 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Impossible de démarrer une nouvelle partie :\n" + err.message);
         }
     }
-
-    // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
-    startBtn.addEventListener('click', initiateGame);
-    newGameBtn.addEventListener('click', initiateGame);
-    sendBtn.addEventListener('click', handleSendMessage);
-
-    // NOUVELLE LOGIQUE POUR LA ZONE DE SAISIE
-    inputMessage.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && !event.altKey) {
-            event.preventDefault(); 
-            handleSendMessage();
-        }
-    });
-
-    inputMessage.addEventListener('input', () => {
-        inputMessage.style.height = 'auto';
-        inputMessage.style.height = (inputMessage.scrollHeight) + 'px';
-    });
 });
